@@ -95,6 +95,44 @@ jmp salida
 salida: 
 
 endm
+
+;----------------------------------------------------------------------------------------------
+
+; CONTADORE DE PALABRAS
+contadorPalabras macro
+
+    local contarcaracteres,charcontados,noesespacio
+    xor si,si         ;limpiar stack index 
+    mov pcontador,1    ;empezar a contar en 1 
+    contarcaracteres: 
+    cmp bufferInformacion[si],"$" ;fin de cadena
+    je charcontados   ;si es igual sale del ciclo  
+    cmp bufferInformacion[si],32 ;compara caracter espacio
+    jne noesespacio   ;si no es igual se va a esa etiqueta
+    add pcontador,1    ;si es igual aumenta el contador 
+    noesespacio:      
+        inc si        ;aumenta el stack index para el siguiente caracter 
+        jmp contarcaracteres ;regresa al inicio del ciclo
+    charcontados:     ;termino de contar
+	print salto
+	IntToString pcontador, pcontador2
+	print pcontador2
+	;imprimir_reg bx
+	
+	print salto 
+	xor si,si   ;limpia si por si se usa despues. No es necesario
+
+endm
+;-----------------------------------------------------------------------------------------
+salirMenu macro
+	print msjcontinue
+	getChar
+	print salto
+	cmp al, 120
+	je exit
+	jmp MenuOpciones
+endm
+
 ;-------------------------------------------------------------------------------------------------
 .model small
 
@@ -105,7 +143,7 @@ endm
 
 .data
 msjEntrada db 0ah, 0dh, '| Universidad de San Carlos de Guatemala',0ah, 0dh,'| Arquitectura de Ensambladores y Computadores 1' , 0ah, 0dh, '| CESAR LEONEL CHAMALE SICAN      201700634' , 0ah, 0dh, '| Pr',160,'ctica 4',0ah, 0dh, '| Ingrese x si desea cerrar el programa' , '$'
-msjComandos db 0ah, 0dh, '| Comandos de aplicacion: ',0ah, 0dh,'| 1. -abrir_',34,'ruta',34 , 0ah, 0dh, '| 2. -contar_<diptongo | triptongo | hiato | palabra>' , 0ah, 0dh, '| 3. -prop_<diptongo | triptongo | hiato > ',0ah, 0dh, '| 4. -colorear' ,0ah, 0dh,'| 5. -reporte',0ah, 0dh,'| 6. -diptongo_palabra',0ah, 0dh,'| 7. -hiato_palabra',0ah, 0dh,'| 8. -triptongo_palabra', '$'
+msjComandos db 0ah, 0dh, '| COMANDOS DE APLICACION: ',0ah, 0dh,'| 1. -abrir_',34,'ruta',34 , 0ah, 0dh, '| 2. -contar_<diptongo | triptongo | hiato | palabra>' , 0ah, 0dh, '| 3. -prop_<diptongo | triptongo | hiato > ',0ah, 0dh, '| 4. -colorear' ,0ah, 0dh,'| 5. -reporte',0ah, 0dh,'| 6. -diptongo_palabra',0ah, 0dh,'| 7. -hiato_palabra',0ah, 0dh,'| 8. -triptongo_palabra', '$'
 
 msjIngreseC db 0ah, 0dh, 'INGRESE EL NUMERO DE SU COMANDO: ' , '$'
 msjcontinue db 0ah, 0dh, 'precione CUALQUIER tecla para continuar o x para salir: ' , '$'
@@ -143,6 +181,12 @@ err2 db 0ah,0dh, 'Error al cerrar el archivo' , '$'
 err3 db 0ah,0dh, 'Error al escribir en el archivo' , '$'
 err4 db 0ah,0dh, 'Error al crear en el archivo' , '$'
 err5 db 0ah,0dh, 'Error al leer en el archivo' , '$'
+
+;---------------------- PARA CONTADORES ------------------------------------------------
+pcontador dw 0
+pcontador2 db 15, '$'
+textoaleer db "Texto de muestra con seis palabras siete ocho nueve dies",'$'
+
 ;----------------SEGMENTO DE CODIGO------------------------------------------------------
 
 
@@ -164,7 +208,7 @@ main proc
 		cmp al,49 ; NUMEOR 1 PARA ABRIR DOC
 		je AbrirArchivo
 		cmp al,50 ; NUMERO 2 PARA CONTAR
-		je exit ;############
+		je contar ;############
 		cmp al,52 ; NUMERO 4 PARA COLOREAR 
 		JE COLOREAR
 		jmp exit
@@ -184,7 +228,6 @@ main proc
 		getChar
 		cmp al, 120 ; if (al == 120){va a brincar a la etiqueta salir}else{va a continuar con el programa}
         je exit
-
 
 	AbrirArchivo2:	
 		print salto
@@ -246,6 +289,9 @@ main proc
 		jmp Menu
 
 
+	contar:
+		contadorPalabras
+		salirMenu
 COLOREAR:
 
 ;----------CON ESTO DE ENTRA A MODO VIDEO-------------------
