@@ -274,24 +274,24 @@ ciclo1:
 	;posicionar al cursor donde corresponde
 	posicionarCursor fila, columna
 
-	esDiptongo texto[si], texto[si+1]
+	esDiptongo bufferInformacion[si], bufferInformacion[si+1]  
 
 	cmp al,0  
 	je letra
 
 	;pintamos el diptongo
-	imprimirVideo texto[si], 0100b ;imprimos blanco
+	imprimirVideo bufferInformacion[si], 0100b ;imprimos blanco 
 	inc columna ;aumenta la posicion del cursor
 	inc si
 
 	posicionarCursor fila, columna
 
 	
-	imprimirVideo texto[si], 0100b ;imprimos blanco
+	imprimirVideo bufferInformacion[si], 0100b ;imprimos blanco  
 	jmp siguiente
 
 	letra:
-		imprimirVideo texto[si], 1111b ;imprimos blanco
+		imprimirVideo bufferInformacion[si], 1111b ;imprimos blanco  
 		jmp siguiente
 
 
@@ -308,7 +308,7 @@ ciclo1:
 		inc fila
 	noSalto:
 
-	cmp texto[si], 36d 
+	cmp bufferInformacion[si], 36d 
 	jne ciclo1
 
 	inc fila
