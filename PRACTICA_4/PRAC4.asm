@@ -160,16 +160,16 @@ msjComando8 db 0ah, 0dh, '-triptongo_','$'
 ;--------------------------COMPARADORES A COMANDOS ---------------------------------------------------
 ;MENSAJE CONTADOR COMPARADOR
 ;---de contador
-msjContaCompDi db 0ah, 0dh, 'diptongo>','$'
-msjContadorCompTri db 0ah, 0dh, 'triptongo>','$'
-msjContadorCompHi db 0ah, 0dh, 'hiato>','$'
-msjContadorCompPa db 0ah, 0dh, 'palabra>','$'
+msjContadorCompDi db 'diptongo>','$'
+msjContadorCompTri db 'triptongo>','$'
+msjContadorCompHi db 'hiato>','$'
+msjContadorCompPa db 'palabra>','$'
 
 ;---- de prop
 ;MENSAJE PROP
-msjPropDi db 0ah, 0dh, 'diptongo>','$'
-msjPropTri db 0ah, 0dh, 'triptongo>','$'
-msjPropHi db 0ah, 0dh, 'hiato>','$'
+msjPropDi db 'diptongo>','$'
+msjPropTri db 'triptongo>','$'
+msjPropHi db 'hiato>','$'
 
 ;------------------------------------------------------------------------------------------------------
 saltoLinea db 0Ah,0Dh,"$"
@@ -189,12 +189,13 @@ handlerentrada dw ?
 bufferInformacion db 700 dup('$')
 
 msjOpcionesArch db 0ah,0dh, '1. Mostrar informacion' , 0ah,0dh, '2. Cerrar archivo' , '$'
-
+;-----------------MENSAJE DE ERROES
 err1 db 0ah,0dh, 'Error al abrir el archivo puede que no exista' , '$'
 err2 db 0ah,0dh, 'Error al cerrar el archivo' , '$'
 err3 db 0ah,0dh, 'Error al escribir en el archivo' , '$'
 err4 db 0ah,0dh, 'Error al crear en el archivo' , '$'
 err5 db 0ah,0dh, 'Error al leer en el archivo' , '$'
+errorComando db 0ah,0dh, "Error comando no existente" ,0ah,0dh, "$"
 
 ;---------------------- PARA CONTADORES ------------------------------------------------
 pcontador dw 0
@@ -205,7 +206,7 @@ pcontador2 db 15, '$'
 textoaleer db "Texto de muestra con seis palabras siete ocho nueve dies",'$'
 ;---------------------AUX PARA ENTRADAS-------------------------------------------------
 auxEntrada db 0, '$'
-auxContador db 0, '$'
+auxContador db '$'
 auxProp db 0, '$'
 auxPalabra db 0, '$'
 
@@ -213,6 +214,9 @@ auxPalabra db 0, '$'
 ;---vec
 vec1 db 10 dup('hiato'), '$'
 vec2 db 10 dup(' '), '$'
+
+etiquetaPruebas db "llego xdd" , "$"
+
 ;----------------SEGMENTO DE CODIGO------------------------------------------------------
 
 
@@ -320,28 +324,81 @@ main proc
 		print err5
 		getChar
 		jmp Menu
-
+	
+	ErrorNoExist:
+		print errorComando
+		jmp Menu
 
 	contar:
 		print salto
-		print vec1
+		print msjContadorCompDi
+		print salto
+		print msjContadorCompTri
+		print salto
+		print msjContadorCompHi
+		print salto
+		print msjContadorCompPa
 		print salto
 		print msjComando2
-		obtenerTexto vec2
-		print vec2
+		obtenerTexto auxContador
+		print auxContador
 		;call XOR_REG
-		mov cx,5
+		;------------PARA HIATOS
+		mov cx,6  ; hiato> 6 posiciones
 		mov AX, DS
 		mov ES, AX
-		LEA si, vec1
-		LEA di, vec2
-		repe cmpsb ;Compare NOM2:NOM3
-		JE COLOREAR 
-		jmp Menu
+		
+		LEA si, msjContadorCompHi
+		LEA di, auxContador
+		repe cmpsb 
+		JE HIATOe ;#################################
 
+		;----------PARA TRIPTONGOS
+		xor cx,cx
+		mov cx,10  ;triptongo>
+		lEA si, msjContadorCompTri
+		LEA di, auxContador
+		repe cmpsb ;Compare NOM2:NOM3
+		JE TRIPTONGOe 
+		
+		;----------PARA DIPTONGO   diptongo>
+
+		xor cx,cx
+		mov cx,9      ; numero de posiciones a comparar diptongo> = 9 posiciones
+		LEA si, msjContadorCompDi
+		LEA di, auxContador
+		repe cmpsb
+		JE DIPTONGOe
+
+		;----------PARA PALABRAS , msjContadorCompPa , palabra>
+		xor cx,cx
+		mov cx,8      ; numero de posiciones a comparar palabra> = 8 POSICIONES
+		LEA si, msjContadorCompPa
+		LEA di, auxContador
+		repe cmpsb
+		JNE ErrorNoExist
 		contadorPalabras
 		salirm:
 		salirMenu
+
+
+HIATOe:
+	print etiquetaPruebas
+	jmp exit
+
+TRIPTONGOe:
+	print etiquetaPruebas
+	print salto
+	print msjContadorCompTri
+	jmp exit
+
+DIPTONGOe:
+	print salto
+	print etiquetaPruebas
+	print salto
+	print msjContadorCompDi
+	jmp exit
+
 
 
 COLOREAR:
