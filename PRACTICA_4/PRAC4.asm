@@ -157,6 +157,20 @@ msjComando5 db 0ah, 0dh, '-reporte','$'
 msjComando6 db 0ah, 0dh, '-diptongo_','$'
 msjComando7 db 0ah, 0dh, '-hiato_','$'
 msjComando8 db 0ah, 0dh, '-triptongo_','$'
+;--------------------------COMPARADORES A COMANDOS ---------------------------------------------------
+;MENSAJE CONTADOR COMPARADOR
+;---de contador
+msjContaCompDi db 0ah, 0dh, 'diptongo>','$'
+msjContadorCompTri db 0ah, 0dh, 'triptongo>','$'
+msjContadorCompHi db 0ah, 0dh, 'hiato>','$'
+msjContadorCompPa db 0ah, 0dh, 'palabra>','$'
+
+;---- de prop
+;MENSAJE PROP
+msjPropDi db 0ah, 0dh, 'diptongo>','$'
+msjPropTri db 0ah, 0dh, 'triptongo>','$'
+msjPropHi db 0ah, 0dh, 'hiato>','$'
+
 ;------------------------------------------------------------------------------------------------------
 saltoLinea db 0Ah,0Dh,"$"
 saludo db 0Ah,0Dh, "Anlaizando texto..........","$"
@@ -173,7 +187,7 @@ comand db 0, '$'
 bufferentrada db 50 dup('$')
 handlerentrada dw ?
 bufferInformacion db 700 dup('$')
-auxEntrada db 0, '$' 
+
 msjOpcionesArch db 0ah,0dh, '1. Mostrar informacion' , 0ah,0dh, '2. Cerrar archivo' , '$'
 
 err1 db 0ah,0dh, 'Error al abrir el archivo puede que no exista' , '$'
@@ -184,13 +198,32 @@ err5 db 0ah,0dh, 'Error al leer en el archivo' , '$'
 
 ;---------------------- PARA CONTADORES ------------------------------------------------
 pcontador dw 0
+contadorHiato dw 0
+contadorDiptongo dw 0
+contadorTriptongo dw 0
 pcontador2 db 15, '$'
 textoaleer db "Texto de muestra con seis palabras siete ocho nueve dies",'$'
+;---------------------AUX PARA ENTRADAS-------------------------------------------------
+auxEntrada db 0, '$'
+auxContador db 0, '$'
+auxProp db 0, '$'
+auxPalabra db 0, '$'
 
+
+;---vec
+vec1 db 10 dup('hiato'), '$'
+vec2 db 10 dup(' '), '$'
 ;----------------SEGMENTO DE CODIGO------------------------------------------------------
 
 
 .code
+XOR_REG proc
+	xor ax, ax
+	xor bx, bx
+	xor cx, cx
+	xor dx, dx
+	ret
+XOR_REG endp
 main proc
 
 	Menu:
@@ -290,8 +323,27 @@ main proc
 
 
 	contar:
+		print salto
+		print vec1
+		print salto
+		print msjComando2
+		obtenerTexto vec2
+		print vec2
+		;call XOR_REG
+		mov cx,5
+		mov AX, DS
+		mov ES, AX
+		LEA si, vec1
+		LEA di, vec2
+		repe cmpsb ;Compare NOM2:NOM3
+		JE COLOREAR 
+		jmp Menu
+
 		contadorPalabras
+		salirm:
 		salirMenu
+
+
 COLOREAR:
 
 ;----------CON ESTO DE ENTRA A MODO VIDEO-------------------
