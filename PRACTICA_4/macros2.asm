@@ -304,11 +304,13 @@ endm
 
 imprimir_reg macro reg	;imprimir registros	
 	push dx ;bkup de dx	
+	push ax
 	mov ah, 02h  
 	mov dx, reg   ;asigno a dx el reg 16 bits 
         ;add dx,30h  ;sumamos para q salga el numero tal cual porq en consola +-30h
 	int 21h
     ;call XOR_REG    ;reset de registros a,b,c,d
+	pop ax
 	pop dx ;bkup de dx	
 endm
 
@@ -316,7 +318,7 @@ IntToString macro num, number ; ax 1111 1111 1111 1111 -> 65535
 	LOCAL Inicio,Final,Mientras,MientrasN,Cero,InicioN
 	push si
 	push di
-	limpiar number,15,24h
+	limpiar number, 15 ,24h
 	mov ax,num ; ax = numero entero a convertir 23
 	cmp ax,0 
 	je Cero

@@ -114,12 +114,12 @@ contadorPalabras macro
         inc si        ;aumenta el stack index para el siguiente caracter 
         jmp contarcaracteres ;regresa al inicio del ciclo
     charcontados:     ;termino de contar
-	print salto
-	IntToString pcontador, pcontador2
-	print pcontador2
+	;print salto
+	;IntToString pcontador, pcontador2
+	;print pcontador2
 	;imprimir_reg bx
 	
-	print salto 
+	;print salto 
 	xor si,si   ;limpia si por si se usa despues. No es necesario
 
 endm
@@ -199,10 +199,25 @@ errorComando db 0ah,0dh, "Error comando no existente" ,0ah,0dh, "$"
 
 ;---------------------- PARA CONTADORES ------------------------------------------------
 pcontador dw 0
-contadorHiato dw 0
+avisoContador4 db "aviso contador",'$'
+contadorHiato dw 40
+avisoContadorh db "aviso contador hi",'$'
+contadoraux dw 0
+avisoContadorh33 db "aviso contador aux",'$'
+pcontadorResH db 15, '$'
+;#######################
+contadorVer db 15, '$'
+;#######################
+avisoContador db "aviso contador",'$'
 contadorDiptongo dw 0
+avisoContador2 db "aviso contador",'$'
 contadorTriptongo dw 0
+avisoContador3 db "aviso contador",'$'
 pcontador2 db 15, '$'
+;#####################################
+pruebaSimb db 2, '$'
+;######################################
+pcontadorProp db 15, '$'
 textoaleer db "Texto de muestra con seis palabras siete ocho nueve dies",'$'
 ;---------------------AUX PARA ENTRADAS-------------------------------------------------
 auxEntrada db 0, '$'
@@ -245,7 +260,9 @@ main proc
 		cmp al,49 ; NUMEOR 1 PARA ABRIR DOC
 		je AbrirArchivo
 		cmp al,50 ; NUMERO 2 PARA CONTAR
-		je contar ;############
+		je contar 
+		cmp al,51 ; NUMERO 3 PARA PROP
+		JE PROPORCION
 		cmp al,52 ; NUMERO 4 PARA COLOREAR 
 		JE COLOREAR
 		jmp exit
@@ -342,7 +359,7 @@ main proc
 		print msjComando2
 		obtenerTexto auxContador
 		print auxContador
-		;call XOR_REG
+		;COMPARACIONES 
 		;------------PARA HIATOS
 		mov cx,6  ; hiato> 6 posiciones
 		mov AX, DS
@@ -351,15 +368,15 @@ main proc
 		LEA si, msjContadorCompHi
 		LEA di, auxContador
 		repe cmpsb 
-		JE HIATOe ;#################################
+		JE HIATOc 
 
 		;----------PARA TRIPTONGOS
 		xor cx,cx
 		mov cx,10  ;triptongo>
 		lEA si, msjContadorCompTri
 		LEA di, auxContador
-		repe cmpsb ;Compare NOM2:NOM3
-		JE TRIPTONGOe 
+		repe cmpsb ;Compare msjContadorCompTri:auxContador
+		JE TRIPTONGOc 
 		
 		;----------PARA DIPTONGO   diptongo>
 
@@ -368,7 +385,7 @@ main proc
 		LEA si, msjContadorCompDi
 		LEA di, auxContador
 		repe cmpsb
-		JE DIPTONGOe
+		JE DIPTONGOc
 
 		;----------PARA PALABRAS , msjContadorCompPa , palabra>
 		xor cx,cx
@@ -381,26 +398,112 @@ main proc
 		salirm:
 		salirMenu
 
+		HIATOc:
+			print etiquetaPruebas
+			jmp exit
 
-HIATOe:
-	print etiquetaPruebas
-	jmp exit
+		TRIPTONGOc:
+			print etiquetaPruebas
+			print salto
+			print msjContadorCompTri
+			jmp exit
 
-TRIPTONGOe:
-	print etiquetaPruebas
-	print salto
-	print msjContadorCompTri
-	jmp exit
-
-DIPTONGOe:
-	print salto
-	print etiquetaPruebas
-	print salto
-	print msjContadorCompDi
-	jmp exit
-
+		DIPTONGOc:
+			print salto
+			print etiquetaPruebas
+			print salto
+			print msjContadorCompDi
+			jmp exit
 
 
+	PROPORCION:
+		print salto
+		print msjPropDi
+		print salto
+		print msjPropHi
+		print salto
+		print msjPropTri
+		print salto
+		print msjComando3
+		obtenerTexto auxProp
+		print auxProp
+		print salto
+		;COMPARACIONES
+		;------------PARA HIATOS
+		mov cx,6  ; hiato> 6 posiciones
+		mov AX, DS
+		mov ES, AX
+		
+		LEA si, msjPropHi
+		LEA di, auxProp
+		repe cmpsb 
+		JE HIATOp 
+
+		;----------PARA TRIPTONGOS
+		xor cx,cx
+		mov cx,10  ;triptongo>
+		lEA si, msjPropTri
+		LEA di, auxProp
+		repe cmpsb ;Compare msjContadorCompTri:auxContador
+		JE TRIPTONGOp
+		
+		;----------PARA DIPTONGO   diptongo>
+
+		xor cx,cx
+		mov cx,9      ; numero de posiciones a comparar diptongo> = 9 posiciones
+		LEA si, msjPropDi
+		LEA di, auxProp
+		repe cmpsb
+		JE DIPTONGOp
+		
+
+
+		jmp exit
+
+
+		HIATOp:
+		print salto
+		print msjPropHi
+		print salto 
+		call XOR_REG
+		xor si,si
+		;contadorPalabras
+		mov ax ,10;contadorHiato
+		;imprimir_reg ax
+		mov bx,100
+		mul bx
+		contadorPalabras
+		mov bx,pcontador
+		div bx
+		print salto
+		imprimir_reg ax
+		print salto
+		imprimir_reg dx
+		print salto
+		limpiar contadoraux,15,0
+		mov si, ax
+		imprimir_reg si
+		print salto
+		mov contadoraux,si
+		print contadoraux
+		print salto
+		print pruebaSimb 
+		print salto
+		IntToString contadoraux,contadorVer
+		print contadorVer
+		;mov bx , pcontador
+
+		jmp Menu
+		TRIPTONGOp:
+		print salto
+		print msjPropTri
+		print salto
+		jmp Menu
+		DIPTONGOp:
+		print salto
+		print msjPropDi
+		print salto
+		jmp Menu
 COLOREAR:
 
 ;----------CON ESTO DE ENTRA A MODO VIDEO-------------------
