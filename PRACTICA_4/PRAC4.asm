@@ -195,6 +195,73 @@ esTriptongo macro caracter1, caracter2, caracter3
 endm
 
 
+;	ALGORITMO PARA HIATO SIN TIILDES (PSEUDOCODIGO)
+; 	IF (CARACTER1= a OR e OR O)
+; 		IF (CARACTER2= a OR e OR O)
+;			ES HIATO
+;		PASAR A REGLA 2
+;	PASAR A REGLA 2
+;
+; #regla2
+;	IF (CARACTER1 = i)
+;		IF (CARACTER2 = i) 
+;			es hiato
+;		no es hiato
+; 	regla 3
+;
+;	IF (CARACTER1 = u)
+;		IF (CARACTER2 = u)
+;			es hiato
+;		no es hiato
+;	no es hiato
+esHiato macro caracter1, caracter2
+	LOCAL salida, esHia,hiatoRegla1,esHiatoAbierta,hiatoRegla2,esHiatoI,esHiatoU
+	mov cl,0
+
+	hiatoRegla1:
+		cmp caracter1,97 ;97 es a
+		JE esHiatoAbierta
+		cmp caracter1, 101 ; es e
+		JE esHiatoAbierta
+		cmp caracter1,111 ; es o
+		JE esHiatoAbierta
+		jmp hiatoRegla2
+	esHiatoAbierta:
+		cmp caracter2,97 ;97 es a
+		JE esHia
+		cmp caracter2, 101 ; es e
+		JE esHia
+		cmp caracter2,111 ; es o
+		JE esHia
+		jmp hiatoRegla2
+
+	hiatoRegla2:
+		cmp caracter1,105; es i
+		JE esHiatoI
+		cmp caracter1,117 ; es u
+		JE esHiatoU
+		jmp salida
+
+	esHiatoI:
+		cmp caracter2,105; es i
+		JE esHia
+		jmp salida
+
+	esHiatoU:
+		cmp caracter2,117 ; es u
+		JE esHia
+		jmp salida
+
+	esHia:
+		mov cl,1
+		inc esHiatoContadorS
+		jmp salida
+
+
+	salida: 
+endm
+
+
 ;----------------------------------------------------------------------------------------------
 
 ; CONTADORE DE PALABRAS
@@ -326,6 +393,8 @@ esDipR3contador dw 0
 avisoContador9 db "aviso contador 9",'$'
 esTripContador dw 0
 avisoContador10 db "aviso contador 10",'$'
+esHiatoContadorS dw 0
+avisoContador11 db "aviso contador 11",'$'
 ;#####################################
 pruebaSimb db 2, '$'
 ;######################################
@@ -686,11 +755,14 @@ ciclo1:
 
 	esTriptongo bufferInformacion[si], bufferInformacion[si+1], bufferInformacion[si+2]
 	esDiptongo bufferInformacion[si], bufferInformacion[si+1]  
+	esHiato bufferInformacion[si], bufferInformacion[si+1]
 
 	cmp bl,0
 	JNE esTripPrint
 	cmp al,0  
 	JNE esDipPrint
+	cmp cl,0
+	JNE esHiatoPrint
 	JMP letra
 
 	esDipPrint:
@@ -725,6 +797,20 @@ ciclo1:
 		posicionarCursor fila, columna
 		imprimirVideo bufferInformacion[si],1110b ;imprimos amarillo 
 		jmp siguiente
+;---------------------------------------------------------------------------------------
+	esHiatoPrint:
+	;pintamos el hiato
+		imprimirVideo bufferInformacion[si], 0100b ;imprimos rojo 
+		inc columna ;aumenta la posicion del cursor
+		inc si
+
+		posicionarCursor fila, columna
+
+		
+		imprimirVideo bufferInformacion[si], 0100b ;imprimos rojo  
+		jmp siguiente
+
+		
 ;---------------------------------------------------------------------------------------
 	letra:
 		imprimirVideo bufferInformacion[si], 1111b ;imprimos blanco  
