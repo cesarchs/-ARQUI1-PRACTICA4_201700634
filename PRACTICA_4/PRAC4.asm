@@ -40,7 +40,7 @@ imprimirVideo macro caracter, color
 endm
 
 esDiptongo macro caracter1, caracter2 ;en el registor al va a tener un 1 si es un diptongo o un 0 si no lo es
-	LOCAL salida, esA, esE, esO, esDip, regla1Dip, regla2Dip,esIr2, esDipR2
+	LOCAL salida, esA, esE, esO, esDip, regla1Dip, regla2Dip,esIr2, esDipR2,esIr3,esUr3,esDipR3,regla3Dip,exept
 	mov al,0
 
 	regla1Dip:
@@ -107,7 +107,8 @@ esDiptongo macro caracter1, caracter2 ;en el registor al va a tener un 1 si es u
 			cmp caracter2,101 ; es e
 			JE exept
 			cmp caracter2,111 ; es o
-			JNE regla3Dip
+			JE esDipR2
+			Jmp regla3Dip
 
 		exept:
 			;push dl 
@@ -120,6 +121,7 @@ esDiptongo macro caracter1, caracter2 ;en el registor al va a tener un 1 si es u
 			mov al,1
 			inc esDipR2Contador
 			inc esDipContadorGen
+			jmp salida
 
 ;----------------- REGLA 3 DE DIPTONGOS
 	regla3Dip:
@@ -133,6 +135,7 @@ esDiptongo macro caracter1, caracter2 ;en el registor al va a tener un 1 si es u
 		esIr3:
 			cmp caracter2, 117 ; es u
 			JE esDipR3
+			JMP salida
 		esUr3:
 			cmp caracter2, 105 ; es i
 			JNE salida
@@ -148,7 +151,7 @@ esDiptongo macro caracter1, caracter2 ;en el registor al va a tener un 1 si es u
 endm
 
 esTriptongo macro caracter1, caracter2, caracter3
-	LOCAL salida, esAt, esEt, esOt,esTrip
+	LOCAL salida, esAt, esEt, esOt,esTrip,esIt
 	mov bl,0
 
 	cmp caracter1,105; es i
@@ -266,7 +269,236 @@ esHiato macro caracter1, caracter2
 
 	salida: 
 endm
+;----------------------------------------------------------------------------PARA PINTAR SIN MODIFICAR CONTADORES ----------------------------------------------------------------
+esDiptongoP macro caracter1, caracter2 ;en el registor al va a tener un 1 si es un diptongo o un 0 si no lo es
+	LOCAL salida, esA, esE, esO, esDip, regla1Dip, regla2Dip,esIr2, esDipR2,esIr3,esUr3,esDipR3,regla3Dip,exept
+	mov al,0
 
+	regla1Dip:
+	esA:
+		cmp caracter1,97 ;97 es a
+		jne esE
+
+		cmp caracter2,105; es i
+		je esDip
+
+		cmp caracter2, 117 ; es u
+		je esDip
+
+		jmp regla2Dip
+		
+
+	esE:
+
+		cmp caracter1,101 ; es e
+		jne esO
+
+		cmp caracter2,105; es i
+		je esDip
+
+		cmp caracter2, 117; es u
+		je esDip
+
+		jmp regla2Dip
+
+
+	esO:
+
+		cmp caracter1,111 ; es o
+		jne regla2Dip
+
+		cmp caracter2,105 ; es i
+		je esDip
+
+		cmp caracter2, 117; es u
+		je esDip
+
+		jmp regla2Dip
+
+	esDip:
+		mov al,1
+		;inc esDipR1Contador
+		;inc esDipContadorGen
+		jmp salida
+
+	
+
+;----------- TEGLA 2 DE DIPTONGOS 
+	regla2Dip:
+		cmp caracter1, 105 ; es i
+		JE esIr2
+		cmp caracter1, 117; es u
+		JE esIr2
+		;jmp regla3Dip
+		jmp regla3Dip
+
+		esIr2:
+			cmp caracter2,97 ; es a
+			JE esDipR2
+			cmp caracter2,101 ; es e
+			JE exept
+			cmp caracter2,111 ; es o
+			JNE regla3Dip
+
+		exept:
+			;push dl 
+			;xor dl,dl
+			;mov dl , bufferInformacion[si-1]
+			cmp  bufferInformacion[si-1], 113 ; es q
+
+			JE salida
+		esDipR2:
+			mov al,1
+			;inc esDipR2Contador
+			;inc esDipContadorGen
+			jmp salida
+
+;----------------- REGLA 3 DE DIPTONGOS
+	regla3Dip:
+		;vocales cerradas
+		cmp caracter1, 105 ; es i
+		JE esIr3
+		cmp caracter1, 117 ; es u
+		JE esUr3
+		jmp salida
+
+		esIr3:
+			cmp caracter2, 117 ; es u
+			JE esDipR3
+		esUr3:
+			cmp caracter2, 105 ; es i
+			JNE salida
+
+		esDipR3:
+			mov al,1
+			;inc esDipContadorGen
+			;inc esDipR3contador
+			jmp salida
+
+
+	salida: 
+
+endm
+
+esTriptongoP macro caracter1, caracter2, caracter3
+	LOCAL salida, esAt, esEt, esOt,esTrip,esIt
+	mov bl,0
+
+	cmp caracter1,105; es i
+	JE esIt
+	cmp caracter1,117 ; es u
+	JE esIt
+	jmp salida
+	esIt:
+		cmp caracter2, 97 ;97 es a
+		JE esAt
+		cmp caracter2, 101 ; es e
+		JE esEt
+		cmp caracter2,111 ; es o
+		JE esOt
+		jmp salida
+
+
+	esAt:
+		cmp caracter3,105; es i
+		JE esTrip
+		cmp caracter3,117 ; es u
+		JE esTrip
+		jmp salida
+		
+
+	esEt:
+		cmp caracter3,105; es i
+		JE esTrip
+		cmp caracter3,117 ; es u
+		JE esTrip
+		jmp salida
+
+	esOt:
+
+		cmp caracter3,105; es i
+		JE esTrip
+		cmp caracter3,117 ; es u
+		JE esTrip
+		jmp salida
+
+	esTrip:
+		mov bl,1
+		;inc esTripContador
+		jmp salida
+
+
+
+
+	salida: 
+endm
+
+
+;	ALGORITMO PARA HIATO SIN TIILDES (PSEUDOCODIGO)
+; 	IF (CARACTER1= a OR e OR O)
+; 		IF (CARACTER2= a OR e OR O)
+;			ES HIATO
+;		PASAR A REGLA 2
+;	PASAR A REGLA 2
+;
+; #regla2
+;	IF (CARACTER1 = i)
+;		IF (CARACTER2 = i) 
+;			es hiato
+;		no es hiato
+; 	regla 3
+;
+;	IF (CARACTER1 = u)
+;		IF (CARACTER2 = u)
+;			es hiato
+;		no es hiato
+;	no es hiato
+esHiatoP macro caracter1, caracter2
+	LOCAL salida, esHia,hiatoRegla1,esHiatoAbierta,hiatoRegla2,esHiatoI,esHiatoU
+	mov cl,0
+
+	hiatoRegla1:
+		cmp caracter1,97 ;97 es a
+		JE esHiatoAbierta
+		cmp caracter1, 101 ; es e
+		JE esHiatoAbierta
+		cmp caracter1,111 ; es o
+		JE esHiatoAbierta
+		jmp hiatoRegla2
+	esHiatoAbierta:
+		cmp caracter2,97 ;97 es a
+		JE esHia
+		cmp caracter2, 101 ; es e
+		JE esHia
+		cmp caracter2,111 ; es o
+		JE esHia
+		jmp hiatoRegla2
+
+	hiatoRegla2:
+		cmp caracter1,105; es i
+		JE esHiatoI
+		cmp caracter1,117 ; es u
+		JE esHiatoU
+		jmp salida
+
+	esHiatoI:
+		cmp caracter2,105; es i
+		JE esHia
+		jmp salida
+
+	esHiatoU:
+		cmp caracter2,117 ; es u
+		JE esHia
+		jmp salida
+
+	esHia:
+		mov cl,1
+		;inc esHiatoContGen
+
+
+
+	salida: 
+endm
 
 ;----------------------------------------------------------------------------------------------
 
@@ -364,6 +596,27 @@ msjPorce db '%','$'
 ;-------------------------------------------------------------------------------------------------
 ;----------------AGREGADOS PARA COMANDOS ------------------------------------------------
 comand db 0, '$'
+
+;------------------PARA REPORTE -----------------------------
+input db "REPORTE.txt",00h;Nombre
+contenedor db 200 dup("$"),"$";Guardar Lectyra
+handle dw ?
+Rencabezado db "REPORTE PRACTICA 4: ",'$'
+RSalto db 10
+RavisoSalto db "aviso salto de linea",'$'
+Rinfo db "CESAR LEONEL CHAMALE SICAN 201700634", '$'
+RPropCant db "PROPORCION Y CANTIDAD ", '$'
+RCantidadPalabras db "Cantidad total de palabras en el documento: ", '$'
+RCantidadHiatos db "Cantidad total de hiatos en el documento: ", '$'
+RPropHiatos db "Proporcion de hiatos en el documento: ", '$'
+RCantidadTriptongos db "Cantidad total de triptongos en el documento: ", '$'
+RPropTriptongos db "Proporcion de triptongos en el documento: ", '$'
+RCantidadDiptongos db "Cantidad total de Diptongos en el documento: ", '$'
+RPropDiptongos db "Proporcion de Diptongos en el documento: ", '$'
+RPunto db ".",'$'
+RPorcentaje db "%",'$'
+
+
 ;--------------- PARA ABRIR DOCUMENTO ---------------------------------------------------
 bufferentrada db 50 dup('$')
 handlerentrada dw ?
@@ -431,6 +684,129 @@ auxPalabra db 0, '$'
 
 
 .code
+CrearReporte proc
+	push ax 
+	push bx
+	push cx 
+	push dx
+	call XOR_REG
+	createFile input,handle
+	OpenFile input,handle
+
+;-------------- IMPRESIONES EN REPORTE ----------------------
+	WriteFile handle,Rencabezado,20
+	WriteFile handle,RSalto,1
+	WriteFile handle,Rinfo,36
+	WriteFile handle,RSalto,1
+	WriteFile handle,RSalto,1
+	WriteFile handle,RPropCant,22
+	WriteFile handle,RSalto,1
+	WriteFile handle,RCantidadPalabras,44
+	contadorPalabras
+	IntToString pcontador,contadorVer
+	WriteFile handle,contadorVer,2 ; mandamos la cantidad de palabras totales
+	WriteFile handle,RSalto,1
+	WriteFile handle,RSalto,1
+	;-------------------------
+	;			hiatos
+	;-------------------------
+	WriteFile handle,RCantidadHiatos,42
+	IntToString esHiatoContGen,contadorVer 
+	WriteFile handle,contadorVer,2 ; mandamos la cantidad de hiatos
+	WriteFile handle,RSalto,1
+	WriteFile handle,RPropHiatos,38
+
+	;----prop hiato------------
+		xor si,si
+		mov ax ,esHiatoContGen ; ax = contadorhiato
+		mov bx,100 ; 			ax * 100
+		mul bx					;	*
+		contadorPalabras		; llamar al metodo que cuanto cuantas todas las palabras
+		mov bx,pcontador ;		resultado de conteo -> bx = resultado
+		div bx	
+		mov contadoraux,ax
+		IntToString contadoraux,contadorVer ; convertimos contador a numeros
+	WriteFile handle,contadorVer,2
+		;mov contadoraux,dx
+		;IntToString contadoraux,contadorVer
+	;WriteFile handle,RPunto,1
+	;WriteFile handle,contadorVer,2
+	WriteFile handle,RPorcentaje,1
+	WriteFile handle,RSalto,1
+	WriteFile handle,RSalto,1
+	;-------------------------
+	;		diptongos
+	;-------------------------
+	WriteFile handle,RCantidadDiptongos,45
+	IntToString esDipContadorGen,contadorVer 
+	WriteFile handle,contadorVer,2 ; mandamos la cantidad de hiatos
+	WriteFile handle,RSalto,1
+	WriteFile handle,RPropDiptongos,41
+
+	;----prop diptongos------------
+		xor si,si
+		mov ax ,esDipContadorGen ; ax = contadorhiato
+		mov bx,100 ; 			ax * 100
+		mul bx					;	*
+		contadorPalabras		; llamar al metodo que cuanto cuantas todas las palabras
+		mov bx,pcontador ;		resultado de conteo -> bx = resultado
+		div bx	
+		mov contadoraux,ax
+		IntToString contadoraux,contadorVer ; convertimos contador a numeros
+	WriteFile handle,contadorVer,2
+		;mov contadoraux,dx
+		;IntToString contadoraux,contadorVer
+	;WriteFile handle,RPunto,1
+	;WriteFile handle,contadorVer,2
+	WriteFile handle,RPorcentaje,1
+	WriteFile handle,RSalto,1
+	WriteFile handle,RSalto,1
+	;-------------------------
+	;		TRIPTONGO
+	;-------------------------
+	WriteFile handle,RCantidadTriptongos,46
+	IntToString esTripContador,contadorVer 
+	WriteFile handle,contadorVer,2 ; mandamos la cantidad de hiatos
+	WriteFile handle,RSalto,1
+	WriteFile handle,RPropTriptongos,42
+
+	;----prop diptongos------------
+		xor si,si
+		mov ax ,esTripContador ; ax = contadorhiato
+		mov bx,100 ; 			ax * 100
+		mul bx					;	*
+		contadorPalabras		; llamar al metodo que cuanto cuantas todas las palabras
+		mov bx,pcontador ;		resultado de conteo -> bx = resultado
+		div bx	
+		mov contadoraux,ax
+		IntToString contadoraux,contadorVer ; convertimos contador a numeros
+	WriteFile handle,contadorVer,2
+		mov contadoraux,dx
+		IntToString contadoraux,contadorVer
+	WriteFile handle,RPunto,1
+	WriteFile handle,contadorVer,2
+	WriteFile handle,RPorcentaje,1
+	WriteFile handle,RSalto,1
+	WriteFile handle,RSalto,1
+
+
+	
+	;WriteFile handle,
+	WriteFile handle,RSalto,1
+	;WriteFile handle,
+	WriteFile handle,RSalto,1
+
+;---------------------------------------------------------
+	CloseFile handle
+
+	call XOR_REG
+	pop dx
+	pop cx 
+	pop bx 
+	pop ax 
+	ret
+CrearReporte endp
+
 XOR_REG proc
 	xor ax, ax
 	xor bx, bx
@@ -438,6 +814,106 @@ XOR_REG proc
 	xor dx, dx
 	ret
 XOR_REG endp
+
+LLENADO_VARIABLES proc 
+	push ax 
+	push bx
+	push cx 
+	push dx
+		CicloLLenado:
+		call XOR_REG
+		;----------------------------------------------------------------------------------------
+
+		esTriptongo bufferInformacion[si], bufferInformacion[si+1], bufferInformacion[si+2]
+		cmp bl,0
+		JNE esTripPrintll
+
+		esDiptongo bufferInformacion[si], bufferInformacion[si+1]  
+		cmp al,0  
+		JNE esDipPrintll
+
+		esHiato bufferInformacion[si], bufferInformacion[si+1]
+		cmp cl,0
+		JNE esHiatoPrintll
+		JMP letrall
+		
+		
+
+		esDipPrintll:
+			;pintamos el diptongo
+			;imprimirVideo bufferInformacion[si], 0010b ;imprimos verde 
+			;inc columna ;aumenta la posicion del cursor
+			inc si
+
+			;posicionarCursor fila, columna
+
+			
+			;imprimirVideo bufferInformacion[si], 0010b ;imprimos verde  
+			jmp siguientell
+
+			;letra:
+			;	imprimirVideo bufferInformacion[si], 1111b ;imprimos blanco  
+			;	jmp siguiente
+	;--------------------------------------------------------------------------------------
+		esTripPrintll:
+			;pintamos el diptongo
+			;imprimirVideo bufferInformacion[si], 1110b ;imprimos amarillo 
+			;inc columna ;aumenta la posicion del cursor
+			inc si
+
+			;posicionarCursor fila, columna
+
+			
+			;imprimirVideo bufferInformacion[si], 1110b ;imprimos amarillo 
+			;inc columna ;aumenta la posicion del cursor
+			inc si 
+
+			;posicionarCursor fila, columna
+			;imprimirVideo bufferInformacion[si],1110b ;imprimos amarillo 
+			jmp siguientell
+	;---------------------------------------------------------------------------------------
+		esHiatoPrintll:
+		;pintamos el hiato
+			;imprimirVideo bufferInformacion[si], 0100b ;imprimos rojo 
+			;inc columna ;aumenta la posicion del cursor
+			inc si
+
+			;posicionarCursor fila, columna
+
+			
+			;imprimirVideo bufferInformacion[si], 0100b ;imprimos rojo  
+			jmp siguientell
+
+			
+	;---------------------------------------------------------------------------------------
+		letrall:
+			;imprimirVideo bufferInformacion[si], 1111b ;imprimos blanco  
+			jmp siguientell
+	;--------------------------------------------------------------------------------------
+
+		siguientell:
+
+		;inc columna ;aumenta la posicion del cursor
+		inc si
+
+
+
+		;cmp columna, 80d
+		;jl noSaltoll
+			;mov columna,0
+			;inc fila
+		;noSaltoll:
+
+		cmp bufferInformacion[si], 36d ; $
+		jne CicloLLenado
+
+	call XOR_REG
+	pop dx
+	pop cx 
+	pop bx 
+	pop ax 
+	ret
+LLENADO_VARIABLES endp
 main proc
 
 	mov ax,@data    
@@ -463,7 +939,9 @@ main proc
 		JE PROPORCION
 		cmp al,52 ; NUMERO 4 PARA COLOREAR 
 		JE COLOREAR
-		jmp exit
+		cmp al,53 ; NUMERO 5 PARA REPORTE
+		JE REPORTE
+		jmp ErrorNoExist
 	AbrirArchivo: ; PARA ABRIR DOC
 		print ingreseruta
 		print saltoLinea
@@ -475,13 +953,14 @@ main proc
 		leer handlerentrada, bufferInformacion, 700 ;leemos el archivo 
 		; para el tamaño se puede mandar as "SIZEOF bufferInformacion" en anbos de limpar pero da problema al ensamblar,
 		;aunque no error, si funciona, pero al automatizar el arranque del ejetucable en doss opcions no acepta bien el SIZEOF
-
+		call LLENADO_VARIABLES
 		print msjcontinue
 		getChar
 		cmp al, 120 ; if (al == 120){va a brincar a la etiqueta salir}else{va a continuar con el programa}
         je exit
 
-	AbrirArchivo2:	
+	AbrirArchivo2:
+
 		print salto
 		print msjOpcionesArch
 		print salto
@@ -508,6 +987,8 @@ main proc
 	CerrarArchivo:
 		cerrar handlerentrada
 		jmp MenuOpciones
+
+	
 
 
 	Error1:
@@ -606,6 +1087,7 @@ main proc
 			mov ax,@data
  			mov ds,ax
 			print salto
+			print salto
 			print msjTotalHiatos
 			
 			IntToString esHiatoContGen , contadorVer ; convertimos contador a numeros
@@ -617,6 +1099,7 @@ main proc
 			mov ax,@data
  			mov ds,ax
 			print salto
+			print salto
 			print msjTotalTriptongos
 			
 			IntToString esTripContador , contadorVer ; convertimos contador a numeros
@@ -627,6 +1110,7 @@ main proc
 		DIPTONGOc:
 			mov ax,@data
  			mov ds,ax
+			print salto
 			print salto
 			print msjTotalDiptongos
 			
@@ -675,10 +1159,8 @@ main proc
 		LEA di, auxProp
 		repe cmpsb
 		JE DIPTONGOp
-		
 
-
-		jmp exit
+		jmp ErrorNoExist
 
 
 		HIATOp:
@@ -712,7 +1194,7 @@ main proc
 			;print salto
 			IntToString contadoraux,contadorVer ; convertimos contador a numeros
 			print contadorVer
-			call XOR_REG
+			;call XOR_REG
 			;print msjPunto1 
 			cmp dx,0
 			JA terminarProp
@@ -829,134 +1311,141 @@ main proc
 
 			terminarProp:
 				;print msjEspacio
+				call XOR_REG
 				print msjPorce
 				print salto
 
 
 		jmp Menu
 
-COLOREAR:
+	COLOREAR:
 
-	;----------CON ESTO DE ENTRA A MODO VIDEO-------------------
-	;al inicializar el modo video le decimos que empiece en la posicion 0
-	; se inicializa modo video con una resolucion de 80x25
-	mov ah, 0
-	mov al, 03h 
-	int 10h
-	;-------------------------------------------------------------
-	imprimir saludo
-	imprimir saltoLinea
-	;----------------------------------------------------------------------------------------------
-	;por que ya imprimimos las palabras de arrbia por eso usamos lo siguiente para guardar la posicion de 
-	;fila y columna
-	mov ah, 03h ; con el 03h le decimos que analice despues del texto anterior
-	mov bh, 00h
-	int 10h ;dh guarda el valor de la ultima posicion fila y dl guarda la ultima posicion de la columna
-	;----------------------------------------------------------------------------------------------
-	; -----------ACTUALIZAMOS POSICIONES
-	mov fila, dh
-	mov columna, dl
-	mov si, 0
-	mov di, 0
+		;----------CON ESTO DE ENTRA A MODO VIDEO-------------------
+		;al inicializar el modo video le decimos que empiece en la posicion 0
+		; se inicializa modo video con una resolucion de 80x25
+		mov ah, 0
+		mov al, 03h 
+		int 10h
+		;-------------------------------------------------------------
+		imprimir saludo
+		imprimir saltoLinea
+		;----------------------------------------------------------------------------------------------
+		;por que ya imprimimos las palabras de arrbia por eso usamos lo siguiente para guardar la posicion de 
+		;fila y columna
+		mov ah, 03h ; con el 03h le decimos que analice despues del texto anterior
+		mov bh, 00h
+		int 10h ;dh guarda el valor de la ultima posicion fila y dl guarda la ultima posicion de la columna
+		;----------------------------------------------------------------------------------------------
+		; -----------ACTUALIZAMOS POSICIONES
+		mov fila, dh
+		mov columna, dl
+		mov si, 0
+		mov di, 0
 
-ciclo1:
-	call XOR_REG
-	;----------------------------------------------------------------------------------------
-	;posicionar al cursor donde corresponde
-	posicionarCursor fila, columna
+	ciclo1:
+		call XOR_REG
+		;----------------------------------------------------------------------------------------
+		;posicionar al cursor donde corresponde
+		posicionarCursor fila, columna
 
-	esTriptongo bufferInformacion[si], bufferInformacion[si+1], bufferInformacion[si+2]
-	cmp bl,0
-	JNE esTripPrint
+		esTriptongoP bufferInformacion[si], bufferInformacion[si+1], bufferInformacion[si+2]
+		cmp bl,0
+		JNE esTripPrint
 
-	esDiptongo bufferInformacion[si], bufferInformacion[si+1]  
-	cmp al,0  
-	JNE esDipPrint
+		esDiptongoP bufferInformacion[si], bufferInformacion[si+1]  
+		cmp al,0  
+		JNE esDipPrint
 
-	esHiato bufferInformacion[si], bufferInformacion[si+1]
-	cmp cl,0
-	JNE esHiatoPrint
-	JMP letra
-	
-	
+		esHiatoP bufferInformacion[si], bufferInformacion[si+1]
+		cmp cl,0
+		JNE esHiatoPrint
+		JMP letra
+		
+		
 
-	esDipPrint:
-		;pintamos el diptongo
-		imprimirVideo bufferInformacion[si], 0010b ;imprimos verde 
+		esDipPrint:
+			;pintamos el diptongo
+			imprimirVideo bufferInformacion[si], 0010b ;imprimos verde 
+			inc columna ;aumenta la posicion del cursor
+			inc si
+
+			posicionarCursor fila, columna
+
+			
+			imprimirVideo bufferInformacion[si], 0010b ;imprimos verde  
+			jmp siguiente
+
+			;letra:
+			;	imprimirVideo bufferInformacion[si], 1111b ;imprimos blanco  
+			;	jmp siguiente
+	;--------------------------------------------------------------------------------------
+		esTripPrint:
+			;pintamos el diptongo
+			imprimirVideo bufferInformacion[si], 1110b ;imprimos amarillo 
+			inc columna ;aumenta la posicion del cursor
+			inc si
+
+			posicionarCursor fila, columna
+
+			
+			imprimirVideo bufferInformacion[si], 1110b ;imprimos amarillo 
+			inc columna ;aumenta la posicion del cursor
+			inc si 
+
+			posicionarCursor fila, columna
+			imprimirVideo bufferInformacion[si],1110b ;imprimos amarillo 
+			jmp siguiente
+	;---------------------------------------------------------------------------------------
+		esHiatoPrint:
+		;pintamos el hiato
+			imprimirVideo bufferInformacion[si], 0100b ;imprimos rojo 
+			inc columna ;aumenta la posicion del cursor
+			inc si
+
+			posicionarCursor fila, columna
+
+			
+			imprimirVideo bufferInformacion[si], 0100b ;imprimos rojo  
+			jmp siguiente
+
+			
+	;---------------------------------------------------------------------------------------
+		letra:
+			imprimirVideo bufferInformacion[si], 1111b ;imprimos blanco  
+			jmp siguiente
+	;--------------------------------------------------------------------------------------
+
+		siguiente:
+
 		inc columna ;aumenta la posicion del cursor
 		inc si
 
-		posicionarCursor fila, columna
 
+
+		cmp columna, 80d
+		jl noSalto
+			mov columna,0
+			inc fila
+		noSalto:
+
+		cmp bufferInformacion[si], 36d ; $
+		jne ciclo1
 		
-		imprimirVideo bufferInformacion[si], 0010b ;imprimos verde  
-		jmp siguiente
 
-		;letra:
-		;	imprimirVideo bufferInformacion[si], 1111b ;imprimos blanco  
-		;	jmp siguiente
-;--------------------------------------------------------------------------------------
-	esTripPrint:
-		;pintamos el diptongo
-		imprimirVideo bufferInformacion[si], 1110b ;imprimos amarillo 
-		inc columna ;aumenta la posicion del cursor
-		inc si
-
-		posicionarCursor fila, columna
-
-		
-		imprimirVideo bufferInformacion[si], 1110b ;imprimos amarillo 
-		inc columna ;aumenta la posicion del cursor
-		inc si 
-
-		posicionarCursor fila, columna
-		imprimirVideo bufferInformacion[si],1110b ;imprimos amarillo 
-		jmp siguiente
-;---------------------------------------------------------------------------------------
-	esHiatoPrint:
-	;pintamos el hiato
-		imprimirVideo bufferInformacion[si], 0100b ;imprimos rojo 
-		inc columna ;aumenta la posicion del cursor
-		inc si
-
-		posicionarCursor fila, columna
-
-		
-		imprimirVideo bufferInformacion[si], 0100b ;imprimos rojo  
-		jmp siguiente
-
-		
-;---------------------------------------------------------------------------------------
-	letra:
-		imprimirVideo bufferInformacion[si], 1111b ;imprimos blanco  
-		jmp siguiente
-;--------------------------------------------------------------------------------------
-
-	siguiente:
-
-	inc columna ;aumenta la posicion del cursor
-	inc si
-
-
-
-	cmp columna, 80d
-	jl noSalto
-		mov columna,0
 		inc fila
-	noSalto:
+		mov ah,02h
+		mov dh,fila
+		mov dl,0
+		mov bh,0
+		int 10h
 
-	cmp bufferInformacion[si], 36d ; $
-	jne ciclo1
-	
+		JMP Menu
 
-	inc fila
-	mov ah,02h
-	mov dh,fila
-	mov dl,0
-	mov bh,0
-	int 10h
 
-	JMP Menu
+	REPORTE:
+		call CrearReporte
+		JMP Menu
+
 
 exit:
 	close
