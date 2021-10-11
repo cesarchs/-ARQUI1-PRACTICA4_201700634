@@ -105,11 +105,17 @@ esDiptongo macro caracter1, caracter2 ;en el registor al va a tener un 1 si es u
 			cmp caracter2,97 ; es a
 			JE esDipR2
 			cmp caracter2,101 ; es e
-			JE esDipR2
+			JE exept
 			cmp caracter2,111 ; es o
 			JNE regla3Dip
 
+		exept:
+			;push dl 
+			;xor dl,dl
+			;mov dl , bufferInformacion[si-1]
+			cmp  bufferInformacion[si-1], 113 ; es q
 
+			JE salida
 		esDipR2:
 			mov al,1
 			inc esDipR2Contador
@@ -254,8 +260,8 @@ esHiato macro caracter1, caracter2
 
 	esHia:
 		mov cl,1
-		inc esHiatoContadorS
-		jmp salida
+		inc esHiatoContGen
+
 
 
 	salida: 
@@ -281,7 +287,7 @@ contadorPalabras macro
         jmp contarcaracteres ;regresa al inicio del ciclo
     charcontados:     ;termino de contar
 	;print salto
-	;IntToString pcontador, pcontador2
+	;IntToString pcontador, avisoContaPrint
 	;print pcontador2
 	;imprimir_reg bx
 	
@@ -330,6 +336,10 @@ msjContadorCompDi db 'diptongo>','$'
 msjContadorCompTri db 'triptongo>','$'
 msjContadorCompHi db 'hiato>','$'
 msjContadorCompPa db 'palabra>','$'
+msjTotalPalabras db 'cantidad todal de palabras: ','$'
+msjTotalHiatos db 'cantidad total de hiatos: ','$'
+msjTotalDiptongos db 'cantidad total de diptongos: ','$'
+msjTotalTriptongos db 'cantidad total de triptongos: ','$'
 
 ;---- de prop
 ;MENSAJE PROP
@@ -371,6 +381,8 @@ errorComando db 0ah,0dh, "Error comando no existente" ,0ah,0dh, "$"
 ;---------------------- PARA CONTADORES ------------------------------------------------
 pcontador dw 0
 avisoContador1 db "aviso contador 1",'$'
+;avisoContaPrint dw 0
+;avisoContaPrint2 db "aviso print contador palabras ",'$'
 contadorHiato dw 1
 avisoContador2 db "aviso contador 2",'$'
 contadoraux dw 0
@@ -393,7 +405,7 @@ esDipR3contador dw 0
 avisoContador9 db "aviso contador 9",'$'
 esTripContador dw 0
 avisoContador10 db "aviso contador 10",'$'
-esHiatoContadorS dw 0
+esHiatoContGen dw 0
 avisoContador11 db "aviso contador 11",'$'
 ;#####################################
 pruebaSimb db 2, '$'
@@ -534,14 +546,14 @@ main proc
 
 	contar:
 		print salto
-		print msjContadorCompDi
-		print salto
-		print msjContadorCompTri
-		print salto
-		print msjContadorCompHi
-		print salto
-		print msjContadorCompPa
-		print salto
+		;print msjContadorCompDi
+		;print salto
+		;print msjContadorCompTri
+		;print salto
+		;print msjContadorCompHi
+		;print salto
+		;print msjContadorCompPa
+		;print salto
 		print msjComando2
 		obtenerTexto auxContador
 		print auxContador
@@ -580,7 +592,13 @@ main proc
 		LEA di, auxContador
 		repe cmpsb
 		JNE ErrorNoExist
+		
+		print salto
+		print msjTotalPalabras
 		contadorPalabras
+		IntToString pcontador,contadorVer ; convertimos contador a numeros
+		print contadorVer
+		print salto
 		salirm:
 		salirMenu
 
@@ -588,25 +606,34 @@ main proc
 			mov ax,@data
  			mov ds,ax
 			print salto
-			;print contadorHiato
-			jmp exit
+			print msjTotalHiatos
+			
+			IntToString esHiatoContGen , contadorVer ; convertimos contador a numeros
+			print contadorVer
+			print salto
+			salirMenu
 
 		TRIPTONGOc:
 			mov ax,@data
  			mov ds,ax
-			print etiquetaPruebas
 			print salto
-			print msjContadorCompTri
-			jmp exit
+			print msjTotalTriptongos
+			
+			IntToString esTripContador , contadorVer ; convertimos contador a numeros
+			print contadorVer
+			print salto
+			salirMenu
 
 		DIPTONGOc:
 			mov ax,@data
  			mov ds,ax
 			print salto
-			print etiquetaPruebas
+			print msjTotalDiptongos
+			
+			IntToString esDipContadorGen , contadorVer ; convertimos contador a numeros
+			print contadorVer
 			print salto
-			print msjContadorCompDi
-			jmp exit
+			salirMenu
 
 
 	PROPORCION:
@@ -655,40 +682,140 @@ main proc
 
 
 		HIATOp:
-		mov ax,@data
- 		mov ds,ax
-		;print salto
-		;print msjPropHi
-		print salto 
+			mov ax,@data
+			mov ds,ax
+			;print salto
+			;print msjPropHi
+			print salto 
 
-		;call XOR_REG
-		xor si,si
-		mov ax ,esDipContadorGen ; ax = contadorhiato
-		mov bx,100 ; 			ax * 100
-		mul bx					;	*
-		contadorPalabras		; llamar al metodo que cuanto cuantas todas las palabras
-		mov bx,pcontador ;		resultado de conteo -> bx = resultado
-		div bx					; resultado de multiplicacion dividido por resultado de conteo
-		;print salto
-		;imprimir_reg ax
-		;print salto
-		;imprimir_reg dx
-		;print salto
-		;limpiar contadoraux,15,0 ;limpiamos el contador 
-		;mov si, ax
-		;imprimir_reg ax
-		;print salto
-		mov contadoraux,ax ; movemos ax a contador
-		;print contadoraux
-		;print salto
-		;print pruebaSimb 
-		;print salto
-		IntToString contadoraux,contadorVer ; convertimos contador a numeros
-		print contadorVer
-		call XOR_REG
-		;print msjPunto1 
-		cmp dx,0
-		JE terminarProp
+			;call XOR_REG
+			xor si,si
+			mov ax ,esHiatoContGen ; ax = contadorhiato
+			mov bx,100 ; 			ax * 100
+			mul bx					;	*
+			contadorPalabras		; llamar al metodo que cuanto cuantas todas las palabras
+			mov bx,pcontador ;		resultado de conteo -> bx = resultado
+			div bx					; resultado de multiplicacion dividido por resultado de conteo
+			;print salto
+			;imprimir_reg ax
+			;print salto
+			;imprimir_reg dx
+			;print salto
+			;limpiar contadoraux,15,0 ;limpiamos el contador 
+			;mov si, ax
+			;imprimir_reg ax
+			;print salto
+			mov contadoraux,ax ; movemos ax a contador
+			;print contadoraux
+			;print salto
+			;print pruebaSimb 
+			;print salto
+			IntToString contadoraux,contadorVer ; convertimos contador a numeros
+			print contadorVer
+			call XOR_REG
+			;print msjPunto1 
+			cmp dx,0
+			JA terminarProp
+
+		;decimalProp:
+			;print salto
+			print msjPunto1
+			mov contadoraux,dx
+			IntToString contadoraux,contadorVer
+			print contadorVer
+			jmp terminarProp
+			;print msjPorce
+			 
+
+
+		jmp Menu
+		
+
+		TRIPTONGOp:
+			mov ax,@data
+			mov ds,ax
+			;print salto
+			;print msjPropHi
+			print salto 
+
+			;call XOR_REG
+			xor si,si
+			mov ax ,esTripContador ; ax = contadorhiato
+			mov bx,100 ; 			ax * 100
+			mul bx					;	*
+			contadorPalabras		; llamar al metodo que cuanto cuantas todas las palabras
+			mov bx,pcontador ;		resultado de conteo -> bx = resultado
+			div bx					; resultado de multiplicacion dividido por resultado de conteo
+			;print salto
+			;imprimir_reg ax
+			;print salto
+			;imprimir_reg dx
+			;print salto
+			;limpiar contadoraux,15,0 ;limpiamos el contador 
+			;mov si, ax
+			;imprimir_reg ax
+			;print salto
+			mov contadoraux,ax ; movemos ax a contador
+			;print contadoraux
+			;print salto
+			;print pruebaSimb 
+			;print salto
+			IntToString contadoraux,contadorVer ; convertimos contador a numeros
+			print contadorVer
+			call XOR_REG
+			;print msjPunto1 
+			cmp dx,0
+			JA terminarProp
+
+		;decimalProp:
+			;print salto
+			print msjPunto1
+			mov contadoraux,dx
+			IntToString contadoraux,contadorVer
+			print contadorVer
+			jmp terminarProp
+			;print msjPorce
+
+
+		jmp Menu
+
+
+
+		DIPTONGOp:
+			mov ax,@data
+			mov ds,ax
+			;print salto
+			;print msjPropHi
+			print salto 
+
+			;call XOR_REG
+			xor si,si
+			mov ax ,esDipContadorGen ; ax = contadorhiato
+			mov bx,100 ; 			ax * 100
+			mul bx					;	*
+			contadorPalabras		; llamar al metodo que cuanto cuantas todas las palabras
+			mov bx,pcontador ;		resultado de conteo -> bx = resultado
+			div bx					; resultado de multiplicacion dividido por resultado de conteo
+			;print salto
+			;imprimir_reg ax
+			;print salto
+			;imprimir_reg dx
+			;print salto
+			;limpiar contadoraux,15,0 ;limpiamos el contador 
+			;mov si, ax
+			;imprimir_reg ax
+			;print salto
+			mov contadoraux,ax ; movemos ax a contador
+			;print contadoraux
+			;print salto
+			;print pruebaSimb 
+			;print salto
+			IntToString contadoraux,contadorVer ; convertimos contador a numeros
+			print contadorVer
+			call XOR_REG
+			;print msjPunto1 
+			cmp dx,0
+			JA terminarProp
 
 		;decimalProp:
 			;print salto
@@ -700,29 +827,14 @@ main proc
 			 
 			
 
-		terminarProp:
-			;print msjEspacio
-			print msjPorce
-			print salto
+			terminarProp:
+				;print msjEspacio
+				print msjPorce
+				print salto
 
 
 		jmp Menu
 
-		TRIPTONGOp:
-		mov ax,@data
- 		mov ds,ax
-		print salto
-		print etiquetaPruebas
-		print msjPropTri
-		print salto
-		jmp Menu
-		DIPTONGOp:
-		mov ax,@data
- 		mov ds,ax
-		print salto
-		print msjPropDi
-		print salto
-		jmp Menu
 COLOREAR:
 
 	;----------CON ESTO DE ENTRA A MODO VIDEO-------------------
@@ -754,16 +866,19 @@ ciclo1:
 	posicionarCursor fila, columna
 
 	esTriptongo bufferInformacion[si], bufferInformacion[si+1], bufferInformacion[si+2]
-	esDiptongo bufferInformacion[si], bufferInformacion[si+1]  
-	esHiato bufferInformacion[si], bufferInformacion[si+1]
-
 	cmp bl,0
 	JNE esTripPrint
+
+	esDiptongo bufferInformacion[si], bufferInformacion[si+1]  
 	cmp al,0  
 	JNE esDipPrint
+
+	esHiato bufferInformacion[si], bufferInformacion[si+1]
 	cmp cl,0
 	JNE esHiatoPrint
 	JMP letra
+	
+	
 
 	esDipPrint:
 		;pintamos el diptongo
@@ -842,7 +957,7 @@ ciclo1:
 	int 10h
 
 	JMP Menu
-	
+
 exit:
 	close
 
