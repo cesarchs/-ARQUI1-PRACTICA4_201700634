@@ -2,16 +2,16 @@ REPORTE PRACTICA 4:
 CESAR LEONEL CHAMALE SICAN 201700634
 
 PROPORCION Y CANTIDAD 
-Cantidad total de palabras en el documento: 89
+Cantidad total de palabras en el documento: 1$
 
-Cantidad total de hiatos en el documento: 5$
-Proporcion de hiatos en el documento: 5$%
+Cantidad total de hiatos en el documento: 0$
+Proporcion de hiatos en el documento: 0$%
 
-Cantidad total de Diptongos en el documento: 18
-Proporcion de Diptongos en el documento: 20%
+Cantidad total de Diptongos en el documento: 0$
+Proporcion de Diptongos en el documento: 0$%
 
-Cantidad total de triptongos en el documento: 9$
-Proporcion de triptongos en el documento: 10.27%
+Cantidad total de triptongos en el documento: 0$
+Proporcion de triptongos en el documento: 0$.27%
 
 
 

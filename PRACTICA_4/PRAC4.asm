@@ -575,9 +575,13 @@ msjTotalTriptongos db 'cantidad total de triptongos: ','$'
 
 ;---- de prop
 ;MENSAJE PROP
+msjGenRep db 'GENERANDO REPORTE','$'
 msjPropDi db 'diptongo>','$'
 msjPropTri db 'triptongo>','$'
 msjPropHi db 'hiato>','$'
+;--- de reporte
+msjRep db 0,'$'
+
 
 ;------------------------------------------------------------------------------------------------------
 saltoLinea db 0Ah,0Dh,"$"
@@ -617,6 +621,16 @@ RPunto db ".",'$'
 RPorcentaje db "%",'$'
 
 
+;--------------------------------------------------------------
+; BUFFERS PARA LA PALABRA QUE DESEAMOS ANALIZAR AISLADAMENTE
+;---------------------------------------------------------------
+bufferPalabra db 15 dup('$')
+RespuestaEsTrip db "SI ES TRIPTONGO ","$"
+RespuestaNoTrip db "LA PALABRA NO ES TRIPTONGO ","$"
+RespuestaEsHi db "SI ES HIATO ","$"
+RespuestaNoHi db "LA PALABRA NO ES HIATO ","$"
+RespuestaEsDi db "SI ES DIPTONGO ","$"
+RespuestaNoDi db "LA PALABRA NO ES DIPTONGO ","$"
 ;--------------- PARA ABRIR DOCUMENTO ---------------------------------------------------
 bufferentrada db 50 dup('$')
 handlerentrada dw ?
@@ -660,6 +674,13 @@ esTripContador dw 0
 avisoContador10 db "aviso contador 10",'$'
 esHiatoContGen dw 0
 avisoContador11 db "aviso contador 11",'$'
+;contadores para palabras al reporte
+ContadorTripReporte dw 0
+avisoContador12 db "aviso contador 12",'$'
+ContadorDipReporte dw 0
+avisoContador13 db "aviso contador 13",'$'
+ContadorHiaReporte dw 0
+avisoContador14 db "aviso contador 14",'$'
 ;#####################################
 pruebaSimb db 2, '$'
 ;######################################
@@ -807,6 +828,7 @@ CrearReporte proc
 	ret
 CrearReporte endp
 
+
 XOR_REG proc
 	xor ax, ax
 	xor bx, bx
@@ -914,6 +936,128 @@ LLENADO_VARIABLES proc
 	pop ax 
 	ret
 LLENADO_VARIABLES endp
+
+
+LLENADO_VARIABLES2 proc 
+	push ax 
+	push bx
+	push cx 
+	push dx
+	push si 
+	push di
+		xor si,si
+		xor di,di
+		CicloLLenado2:
+		call XOR_REG
+		;----------------------------------------------------------------------------------------
+
+		esTriptongoP bufferInformacion[si], bufferInformacion[si+1], bufferInformacion[si+2]
+		cmp bl,0
+		
+		JNE esTripPrintll2
+
+		esDiptongoP bufferInformacion[si], bufferInformacion[si+1]  
+		cmp al,0  
+		
+		JNE esDipPrintll2
+
+		esHiatoP bufferInformacion[si], bufferInformacion[si+1]
+		cmp cl,0
+		
+		JNE esHiatoPrintll2
+		JMP letrall2
+		
+		
+
+		esDipPrintll2:
+			;GUARDAMOS el diptongo
+			mov di,si
+
+			;imprimirVideo bufferInformacion[si], 0010b ;imprimos verde 
+
+			;inc columna ;aumenta la posicion del cursor
+			inc ContadorDipReporte
+			inc si
+
+			;posicionarCursor fila, columna
+
+			
+			;imprimirVideo bufferInformacion[si], 0010b ;imprimos verde  
+			jmp siguientell2
+
+			;letra:
+			;	imprimirVideo bufferInformacion[si], 1111b ;imprimos blanco  
+			;	jmp siguiente
+	;--------------------------------------------------------------------------------------
+		esTripPrintll2:
+		
+			;pintamos el diptongo
+			;imprimirVideo bufferInformacion[si], 1110b ;imprimos amarillo 
+			;inc columna ;aumenta la posicion del cursor
+			inc ContadorTripReporte
+			inc si
+
+			;posicionarCursor fila, columna
+
+			
+			;imprimirVideo bufferInformacion[si], 1110b ;imprimos amarillo 
+			;inc columna ;aumenta la posicion del cursor
+			inc si 
+
+			;posicionarCursor fila, columna
+			;imprimirVideo bufferInformacion[si],1110b ;imprimos amarillo 
+			jmp siguientell2
+	;---------------------------------------------------------------------------------------
+		esHiatoPrintll2:
+		;pintamos el hiato
+			;imprimirVideo bufferInformacion[si], 0100b ;imprimos rojo 
+			;inc columna ;aumenta la posicion del cursor
+			inc ContadorHiaReporte
+			inc si
+
+			;posicionarCursor fila, columna
+
+			
+			;imprimirVideo bufferInformacion[si], 0100b ;imprimos rojo  
+			jmp siguientell2
+
+			
+	;---------------------------------------------------------------------------------------
+		letrall2:
+			;imprimirVideo bufferInformacion[si], 1111b ;imprimos blanco  
+			jmp siguientell2
+	;--------------------------------------------------------------------------------------
+
+		siguientell2:
+
+		;inc columna ;aumenta la posicion del cursor
+		inc si
+
+
+
+		;cmp columna, 80d
+		;jl noSaltoll
+			;mov columna,0
+			;inc fila
+		;noSaltoll:
+
+		cmp bufferInformacion[si], 36d ; $
+		jne CicloLLenado2
+
+	call XOR_REG
+	xor si,si 
+	xor di,di
+	pop di
+	pop si 
+	pop dx
+	pop cx 
+	pop bx 
+	pop ax 
+	ret
+LLENADO_VARIABLES2 endp
+
+
+
 main proc
 
 	mov ax,@data    
@@ -941,6 +1085,12 @@ main proc
 		JE COLOREAR
 		cmp al,53 ; NUMERO 5 PARA REPORTE
 		JE REPORTE
+		cmp al,54 ; NUMERO 6 PARA PALABRA DIPTONGO
+		JE PALABRA_DIPTONGO 
+		cmp al,55 ; NUMERO 7 PARA PALABRA HIATO
+		JE PALABRA_HIATO
+		cmp al,56 ; NUMERO 8 PARA PALABRA TRIPTONGO
+		JE PALABRA_TRIPTONGO
 		jmp ErrorNoExist
 	AbrirArchivo: ; PARA ABRIR DOC
 		print ingreseruta
@@ -1443,8 +1593,393 @@ main proc
 
 
 	REPORTE:
+		print salto
+		obtenerTexto msjRep
+		;print msjRep
+		print salto 
+		print msjGenRep
 		call CrearReporte
+		print salto
 		JMP Menu
+
+
+	PALABRA_TRIPTONGO:
+		;push bx
+		xor si,si
+		mov si,0
+		mov di, 0
+		;call XOR_REG
+		print salto
+		limpiar bufferPalabra,15,24h
+		print msjComando8
+		obtenerTexto bufferPalabra
+		print salto
+		print bufferPalabra
+		print salto
+			
+		ciclo2:
+			call XOR_REG
+			;----------------------------------------------------------------------------------------
+
+			esTriptongoP bufferPalabra[si], bufferPalabra[si+1], bufferPalabra[si+2]
+			cmp bl,0
+			JNE esTripPrintT
+			
+			;esDiptongoP bufferPalabra[si], bufferPalabra[si+1]  
+			;cmp al,0  
+			;JNE esDipPrintT
+
+			;esHiatoP bufferPalabra[si], bufferPalabra[si+1]
+			;cmp cl,0
+			;JNE esHiatoPrintT
+			JMP letraT
+			
+			
+
+			esDipPrintT:
+				;pintamos el diptongo
+				;imprimirVideo bufferInformacion[si], 0010b ;imprimos verde 
+				;inc columna ;aumenta la posicion del cursor
+				inc si
+
+				;posicionarCursor fila, columna
+
+				
+				;imprimirVideo bufferInformacion[si], 0010b ;imprimos verde  
+				jmp siguienteT
+
+				;letra:
+				;	imprimirVideo bufferInformacion[si], 1111b ;imprimos blanco  
+				;	jmp siguiente
+		;--------------------------------------------------------------------------------------
+			esTripPrintT:
+				;pintamos el diptongo
+				;imprimirVideo bufferInformacion[si], 1110b ;imprimos amarillo 
+				;inc columna ;aumenta la posicion del cursor
+				inc si
+
+				;posicionarCursor fila, columna
+
+				
+				;imprimirVideo bufferInformacion[si], 1110b ;imprimos amarillo 
+				;inc columna ;aumenta la posicion del cursor
+				inc si 
+				
+
+				;posicionarCursor fila, columna
+				;imprimirVideo bufferInformacion[si],1110b ;imprimos amarillo 
+				jmp SIESTRIP
+		;---------------------------------------------------------------------------------------
+			esHiatoPrintT:
+			;pintamos el hiato
+				;imprimirVideo bufferInformacion[si], 0100b ;imprimos rojo 
+				;inc columna ;aumenta la posicion del cursor
+				inc si
+
+				;posicionarCursor fila, columna
+
+				
+				;imprimirVideo bufferInformacion[si], 0100b ;imprimos rojo  
+				jmp siguienteT
+
+				
+		;---------------------------------------------------------------------------------------
+			letraT:
+				;imprimirVideo bufferInformacion[si], 1111b ;imprimos blanco  
+				jmp siguienteT
+		;--------------------------------------------------------------------------------------
+
+			siguienteT:
+		
+			;inc columna ;aumenta la posicion del cursor
+			inc si
+
+
+
+			;cmp columna, 80d
+			;jl noSalto
+			;	mov columna,0
+			;	inc fila
+			;noSalto:
+
+			cmp bufferInformacion[si], 36d ; $
+			jne ciclo2
+			;print salto
+			;print RespuestaNoTrip
+			;print texto
+			;print salto
+			jmp SIESTRIP
+		
+		SIESTRIP:
+		print salto
+		print RespuestaEsTrip
+		print salto
+	
+		JMP Menu
+
+		SALIRT:
+		print salto
+		print RespuestaNoTrip
+		print salto
+		print salto
+
+		JMP Menu
+
+		SALIRTt:
+		print msjPunto1
+		JMP Menu
+	PALABRA_DIPTONGO:
+		;push bx
+		xor si,si
+		mov si,0
+		mov di, 0
+		;call XOR_REG
+		print salto
+		limpiar bufferPalabra,15,24h
+		print msjComando6
+		obtenerTexto bufferPalabra
+		print salto
+		print bufferPalabra
+		print salto
+			
+		ciclo4:
+			call XOR_REG
+			;----------------------------------------------------------------------------------------
+
+			;esTriptongoP bufferPalabra[si], bufferPalabra[si+1], bufferPalabra[si+2]
+			;cmp bl,0
+			;JNE esTripPrintT
+			
+			esDiptongoP bufferPalabra[si], bufferPalabra[si+1]  
+			cmp al,0  
+			JNE esDipPrintTD
+
+			;esHiatoP bufferPalabra[si], bufferPalabra[si+1]
+			;cmp cl,0
+			;JNE esHiatoPrintT
+			JMP letraT
+			
+			
+
+			esDipPrintTD:
+				;pintamos el diptongo
+				;imprimirVideo bufferInformacion[si], 0010b ;imprimos verde 
+				;inc columna ;aumenta la posicion del cursor
+				inc si
+
+				;posicionarCursor fila, columna
+
+				
+				;imprimirVideo bufferInformacion[si], 0010b ;imprimos verde  
+				jmp SIESTRIPD
+
+				;letra:
+				;	imprimirVideo bufferInformacion[si], 1111b ;imprimos blanco  
+				;	jmp siguiente
+		;--------------------------------------------------------------------------------------
+			esTripPrintTD:
+				;pintamos el diptongo
+				;imprimirVideo bufferInformacion[si], 1110b ;imprimos amarillo 
+				;inc columna ;aumenta la posicion del cursor
+				inc si
+
+				;posicionarCursor fila, columna
+
+				
+				;imprimirVideo bufferInformacion[si], 1110b ;imprimos amarillo 
+				;inc columna ;aumenta la posicion del cursor
+				inc si 
+				
+
+				;posicionarCursor fila, columna
+				;imprimirVideo bufferInformacion[si],1110b ;imprimos amarillo 
+				jmp SALIRTD
+		;---------------------------------------------------------------------------------------
+			esHiatoPrintTD:
+			;pintamos el hiato
+				;imprimirVideo bufferInformacion[si], 0100b ;imprimos rojo 
+				;inc columna ;aumenta la posicion del cursor
+				inc si
+
+				;posicionarCursor fila, columna
+
+				
+				;imprimirVideo bufferInformacion[si], 0100b ;imprimos rojo  
+				jmp siguienteTD
+
+				
+		;---------------------------------------------------------------------------------------
+			letraTD:
+				;imprimirVideo bufferInformacion[si], 1111b ;imprimos blanco  
+				jmp siguienteTD
+		;--------------------------------------------------------------------------------------
+
+			siguienteTD:
+		
+			;inc columna ;aumenta la posicion del cursor
+			inc si
+
+
+
+			;cmp columna, 80d
+			;jl noSalto
+			;	mov columna,0
+			;	inc fila
+			;noSalto:
+
+			cmp bufferInformacion[si], 36d ; $
+			jne ciclo4
+			;print salto
+			;print RespuestaNoTrip
+			;print texto
+			;print salto
+			jmp SIESTRIPD
+		
+		SIESTRIPD:
+		print salto
+		print RespuestaEsDi
+		print salto
+	
+		JMP Menu
+
+		SALIRTD:
+		print salto
+		print RespuestaNoDi
+		print salto
+		print salto
+	
+		JMP Menu
+
+		SALIRTtD:
+		print msjPunto1
+		JMP Menu
+
+	PALABRA_HIATO:
+		;push bx
+		xor si,si
+		mov si,0
+		mov di, 0
+		;call XOR_REG
+		print salto
+		limpiar bufferPalabra,15,24h
+		print msjComando7
+		obtenerTexto bufferPalabra
+		print salto
+		print bufferPalabra
+		print salto
+			
+		ciclo3:
+			call XOR_REG
+			;----------------------------------------------------------------------------------------
+
+			;esTriptongoP bufferPalabra[si], bufferPalabra[si+1], bufferPalabra[si+2]
+			;cmp bl,0
+			;JNE esTripPrintT
+			
+			;esDiptongoP bufferPalabra[si], bufferPalabra[si+1]  
+			;cmp al,0  
+			;JNE esDipPrintT
+
+			esHiatoP bufferPalabra[si], bufferPalabra[si+1]
+			cmp cl,0
+			JNE esHiatoPrintTH
+			JMP letraT
+			
+			
+
+			esDipPrintTH:
+				;pintamos el diptongo
+				;imprimirVideo bufferInformacion[si], 0010b ;imprimos verde 
+				;inc columna ;aumenta la posicion del cursor
+				inc si
+
+				;posicionarCursor fila, columna
+
+				
+				;imprimirVideo bufferInformacion[si], 0010b ;imprimos verde  
+				jmp siguienteTH
+
+				;letra:
+				;	imprimirVideo bufferInformacion[si], 1111b ;imprimos blanco  
+				;	jmp siguiente
+		;--------------------------------------------------------------------------------------
+			esTripPrintTH:
+				;pintamos el diptongo
+				;imprimirVideo bufferInformacion[si], 1110b ;imprimos amarillo 
+				;inc columna ;aumenta la posicion del cursor
+				inc si
+
+				;posicionarCursor fila, columna
+
+				
+				;imprimirVideo bufferInformacion[si], 1110b ;imprimos amarillo 
+				;inc columna ;aumenta la posicion del cursor
+				inc si 
+				
+
+				;posicionarCursor fila, columna
+				;imprimirVideo bufferInformacion[si],1110b ;imprimos amarillo 
+				jmp SALIRTH
+		;---------------------------------------------------------------------------------------
+			esHiatoPrintTH:
+			;pintamos el hiato
+				;imprimirVideo bufferInformacion[si], 0100b ;imprimos rojo 
+				;inc columna ;aumenta la posicion del cursor
+				inc si
+
+				;posicionarCursor fila, columna
+
+				
+				;imprimirVideo bufferInformacion[si], 0100b ;imprimos rojo  
+				jmp SIESTRIPH
+
+				
+		;---------------------------------------------------------------------------------------
+			letraTH:
+				;imprimirVideo bufferInformacion[si], 1111b ;imprimos blanco  
+				jmp siguienteTH
+		;--------------------------------------------------------------------------------------
+
+			siguienteTH:
+		
+			;inc columna ;aumenta la posicion del cursor
+			inc si
+
+
+
+			;cmp columna, 80d
+			;jl noSalto
+			;	mov columna,0
+			;	inc fila
+			;noSalto:
+
+			cmp bufferInformacion[si], 36d ; $
+			jne ciclo3
+			;print salto
+			;print RespuestaNoTrip
+			;print texto
+			;print salto
+			jmp SIESTRIPH
+		
+		SIESTRIPH:
+		print salto
+		print RespuestaEsHi
+		print salto
+
+		JMP Menu
+
+		SALIRTH:
+		print salto
+		print RespuestaNoHi
+		print salto
+		print salto
+
+		JMP Menu
+
+		SALIRTtH:
+		print msjPunto1
+		JMP Menu	
+
 
 
 exit:
